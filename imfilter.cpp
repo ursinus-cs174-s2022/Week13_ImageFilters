@@ -37,15 +37,53 @@ void mean(SimpleCanvas& imagein, int x, int y, int kernelWidth, uint8_t* pixelOu
 }
 
 void motionBlur(SimpleCanvas& imagein, int x, int y, int kernelWidth, uint8_t* pixelOut) {
-    // TODO: Fill this in
+    double total[3];
+    for (int k = 0; k < 3; k++) {
+        total[k] = imagein.data[y][x][k];
+        if (x-kernelWidth >= 0 && y-kernelWidth >= 0) {
+            total[k] += imagein.data[y-kernelWidth][x-kernelWidth][k];
+        }
+        if (x+kernelWidth < imagein.width && y+kernelWidth < imagein.height) {
+            total[k] += imagein.data[y+kernelWidth][x+kernelWidth][k];
+        }
+    }
+    for (int k = 0; k < 3; k++) {
+        pixelOut[k] = (uint8_t)(total[k]/3);
+    }
 }
 
 void sharpen(SimpleCanvas& imagein, int x, int y, int kernelWidth, uint8_t* pixelOut) {
-    // TODO: Fill this in
+    double total[3];
+    for (int k = 0; k < 3; k++) {
+        total[k] = imagein.data[y][x][k]*9;
+    }
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            int x2 = x + dx;
+            int y2 = y + dy;
+            if (dx == 0 && dy == 0) {
+                continue;
+            }
+            if (x2 >= 0 && x2 < imagein.width && y2 >= 0 && y2 < imagein.height) {
+                for (int k = 0; k < 3; k++) {
+                    total[k] -= (double)imagein.data[y2][x2][k];
+                }
+            }
+        }
+    }
+    for (int k = 0; k < 3; k++) {
+        if (total[k] > 255) {
+            total[k] = 255;
+        }
+        if (total[k] < 0) {
+            total[k] = 0;
+        }
+        pixelOut[k] = (uint8_t)total[k];
+    }
 }
 
 void emboss(SimpleCanvas& imagein, int x, int y, int kernelWidth, uint8_t* pixelOut) {
-    // TODO: Fill this in
+    
 }
 
 
@@ -106,7 +144,14 @@ Parameters parseArgs(int argc, char** argv) {
 
 
 void filterImage(SimpleCanvas& imagein, SimpleCanvas& imageout, Parameters params) {
-    // TODO: Fill this in
+    uint8_t pixel[3];
+    for (int y = 0; y < imagein.height; y++) {
+        for (int x = 0; x < imagein.width; x++) {
+            params.filter(imagein, x, y, params.kernelWidth, pixel);
+            imageout.setPixel(x, y, pixel[0], pixel[1], pixel[2]);
+        }
+    }
+    
 }
 
 int main(int argc, char** argv) {
